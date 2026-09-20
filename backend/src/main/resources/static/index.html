@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>评论检测系统</title>
+    <style>
+        .container { max-width: 800px; margin: 0 auto; padding: 20px; }
+        #result { margin-top: 20px; padding: 15px; border-radius: 5px; }
+        .negative { background-color: #ffe6e6; border: 1px solid #ff4d4d; }
+        .normal { background-color: #e6ffe6; border: 1px solid #4dff4d; }
+        .positive { background-color: #e6f3ff; border: 1px solid #4da6ff; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>评论内容检测系统</h1>
+    <textarea id="commentInput" rows="5" placeholder="请输入需要检测的评论内容..." style="width: 100%;"></textarea>
+    <button onclick="detectComment()" style="margin-top: 10px; padding: 8px 16px;">立即检测</button>
+    <div id="result"></div>
+</div>
+
+<script>
+    async function detectComment() {
+        const text = document.getElementById('commentInput').value;
+        if (!text.trim()) {
+            alert("请输入评论内容！");
+            return;
+        }
+
+        try {
+            const response = await fetch('http://localhost:8080/api/comment/detect', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text: text })
+            });
+
+            const result = await response.json();
+            const resultDiv = document.getElementById('result');
+            resultDiv.className = result.status.toLowerCase();
+            resultDiv.innerHTML = `
+                    <h3>检测结果：${result.status}</h3>
+                    <p>预处理后文本：${result.text}</p>
+                    <p>负面概率：${(result.prob_negative * 100).toFixed(1)}%</p>
+                    <p>正常概率：${(result.prob_normal * 100).toFixed(1)}%</p>
+                    <p>正面概率：${(result.prob_positive * 100).toFixed(1)}%</p>
+                    ${result.status === '负面' ? '<button onclick="reportFalse()" style="margin-top: 10px;">误报反馈</button>' : ''}
+                `;
+        } catch (error) {
+            alert("检测失败，请稍后重试！");
+            console.error(error);
+        }
+    }
+
+    function reportFalse() {
+        // TODO: 实现误报反馈逻辑
+        alert('感谢您的反馈，我们将尽快处理！');
+    }
+</script>
+</body>
+</html>
